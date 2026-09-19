@@ -68,3 +68,31 @@ The final application will be:
 - FastAPI
 - Docker
 - deployed on Google Cloud Platform
+
+## Version 1 Decisions
+
+Source dataset: `data/raw/aa_dataset-tickets-multi-lang-5-2-50-version.csv`
+(28,587 rows). No other dataset file is used in v1.
+
+Candidate filtering (deterministic, metadata only):
+
+- language = en
+- type in Incident, Problem
+- queue in Technical Support, IT Support,
+  Service Outages and Maintenance, Product Support
+
+This produces candidate tickets only. Whether a candidate is really a
+technical incident (`is_technical_incident`) is decided later, semantically,
+during extraction. It is pipeline metadata and never enters the graph.
+
+Ticket identity: `ticket_id` is the SHA-256 of the normalized subject + body
+(Unicode NFC, whitespace collapsed, trimmed). It never depends on row order.
+
+Method: deterministic rules for structured fields and filtering; an LLM for
+semantic technical classification and entity extraction. Extraction starts
+with 50 candidate tickets.
+
+Stage outputs are written under `data/processed/`, one folder per stage, and
+every stage also writes its rejected records with the reasons.
+
+Out of scope for now: GraphRAG, retrieval, API, Neo4j, GCP.

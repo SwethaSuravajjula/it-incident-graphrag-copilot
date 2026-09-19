@@ -28,6 +28,21 @@ The support queue responsible for the incident.
 Metadata attached to a ticket.
 
 
+## Incident Properties
+
+Properties stored on the Incident node (not separate nodes):
+
+- ticket_id: stable SHA-256 hash of the normalized ticket subject + body
+- ticket_type: the ticket type from the source data (v1: Incident or Problem)
+- priority: the priority from the source data (low, medium, high)
+- language: the ticket language code (v1: en)
+
+A property that is missing in the source data stays missing.
+
+`is_technical_incident` is pipeline metadata. It is not an Incident
+property and not a node.
+
+
 ## Relationships
 
 Incident -> AFFECTS -> System
@@ -56,4 +71,5 @@ Incident -> HAS_TAG -> Tag
   - workaround
   - status_update
   - resolution
+  - general_response
 - Missing information should remain missing rather than being inferred.
