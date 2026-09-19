@@ -1,0 +1,6 @@
+# Core dependencies. Add packages here only when a feature needs them.
+pandas>=2.2
+python-dotenv>=1.0
+
+# Dev
+pytest>=8.0

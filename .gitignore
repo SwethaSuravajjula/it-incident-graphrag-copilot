@@ -1,1 +1,20 @@
 .DS_Store
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+*.egg-info/
+.ipynb_checkpoints/
+
+# Secrets (never commit)
+.env
+*service-account*.json
+*credentials*.json
+
+# Datasets (raw and processed data are never committed)
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
