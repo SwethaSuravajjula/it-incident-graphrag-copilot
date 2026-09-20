@@ -17,6 +17,6 @@ class Ticket:
     queue: str | None
     priority: str | None
     language: str | None
-    tags: tuple[str, ...]
+    all_tags: tuple[str, ...]
     # Raw `version` column. Meaning not documented in the source; kept as provenance.
     source_version: str | None

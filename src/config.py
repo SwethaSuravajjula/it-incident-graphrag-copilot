@@ -15,3 +15,7 @@ V1_SOURCE_DATASET = RAW_DATA_DIR / "aa_dataset-tickets-multi-lang-5-2-50-version
 load_dotenv(PROJECT_ROOT / ".env")
 
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+
+# LLM used for semantic extraction (Groq API). The SDK reads GROQ_API_KEY from the environment.
+# Schema-constrained ("strict") JSON output is only supported on some Groq models, e.g. openai/gpt-oss-*.
+EXTRACTION_MODEL = os.getenv("EXTRACTION_MODEL", "openai/gpt-oss-120b")

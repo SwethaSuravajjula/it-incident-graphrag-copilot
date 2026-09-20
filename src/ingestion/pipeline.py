@@ -86,11 +86,14 @@ def run(raw_path: Path = V1_SOURCE_DATASET, output_dir: Path = PROCESSED_DATA_DI
         "rejected": len(filtering.rejected),
         # A ticket can fail several filters, so these can add up to more than "rejected".
         "rejected_by_reason": _reason_counts(filtering.rejected),
+        "candidates_by_priority": dict(sorted(Counter(t.priority for t in filtering.candidates if t.priority is not None).items())),
+        "candidates_missing_priority": sum(t.priority is None for t in filtering.candidates),
         "candidates_by_queue": dict(sorted(Counter(t.queue for t in filtering.candidates).items())),
         "candidates_by_ticket_type": dict(sorted(Counter(t.ticket_type for t in filtering.candidates).items())),
     }
     write_json(candidates_dir / "manifest.json", filtering_manifest)
 
+    logger.info("Saved stage outputs under %s", output_dir)
     return {"cleaning": cleaning_manifest, "candidate_filtering": filtering_manifest}
 
 

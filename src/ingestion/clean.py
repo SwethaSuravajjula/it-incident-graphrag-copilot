@@ -49,6 +49,7 @@ def clean_tickets(rows: Iterable[Mapping[str, str]]) -> CleaningResult:
     first_row_by_id: dict[str, int] = {}
 
     for source_row, row in enumerate(rows):
+        ticket_id = make_ticket_id(row.get("subject"), row.get("body"))
         body = clean_text(row.get("body"))
         if body is None:
             result.rejected.append(
@@ -56,12 +57,12 @@ def clean_tickets(rows: Iterable[Mapping[str, str]]) -> CleaningResult:
                     "stage": "cleaning",
                     "reasons": [REASON_EMPTY_BODY],
                     "source_row": source_row,
+                    "ticket_id": ticket_id,
                     "raw": dict(row),
                 }
             )
             continue
 
-        ticket_id = make_ticket_id(row.get("subject"), row.get("body"))
         priority = _clean_label(row.get("priority"))
         language = _clean_label(row.get("language"))
         ticket = Ticket(
@@ -74,7 +75,7 @@ def clean_tickets(rows: Iterable[Mapping[str, str]]) -> CleaningResult:
             queue=_clean_label(row.get("queue")),
             priority=priority.lower() if priority else None,
             language=language.lower() if language else None,
-            tags=_clean_tags(row),
+            all_tags=_clean_tags(row),
             source_version=_clean_label(row.get("version")),
         )
 

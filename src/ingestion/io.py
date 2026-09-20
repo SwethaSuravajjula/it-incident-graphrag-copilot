@@ -6,7 +6,6 @@ from collections.abc import Iterable, Iterator, Mapping
 from pathlib import Path
 from typing import Any
 
-
 def write_jsonl(path: Path, records: Iterable[Mapping[str, Any]]) -> int:
     """Write one JSON object per line (UTF-8, not ASCII-escaped). Returns the count."""
     path.parent.mkdir(parents=True, exist_ok=True)

@@ -37,7 +37,7 @@ def test_text_is_cleaned_but_ticket_id_uses_raw_text(raw_rows):
 
 def test_tags_drop_blanks_and_duplicates_and_keep_order(raw_rows):
     ticket = next(t for t in clean_tickets(raw_rows).tickets if t.source_row == 8)
-    assert ticket.tags == ("Outage", "Web")
+    assert ticket.all_tags == ("Outage", "Web")
 
 
 def test_categorical_fields_are_trimmed_and_priority_language_lowercased(raw_rows):
@@ -55,3 +55,18 @@ def test_empty_categorical_value_becomes_none_not_a_guess(raw_rows):
 
 def test_source_version_is_kept_as_provenance(raw_rows):
     assert clean_tickets(raw_rows).tickets[0].source_version == "400"
+
+
+def test_missing_body_is_rejected_with_stable_id_and_original_data(raw_rows):
+    row = dict(raw_rows[0], subject=None, body=None, answer=None)
+    result = clean_tickets([row])
+    assert result.tickets == []
+    assert result.rejected[0]["ticket_id"] == make_ticket_id(None, None)
+    assert result.rejected[0]["raw"] == row
+    assert result.rejected[0]["reasons"] == [REASON_EMPTY_BODY]
+
+
+def test_missing_tags_produce_empty_collection(raw_rows):
+    row = {key: value for key, value in raw_rows[0].items() if not key.startswith("tag_")}
+    row["tag_1"] = None
+    assert clean_tickets([row]).tickets[0].all_tags == ()

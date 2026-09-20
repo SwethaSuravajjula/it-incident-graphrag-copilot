@@ -20,16 +20,16 @@ def test_pipeline_writes_all_stage_outputs_with_consistent_counts(raw_csv, tmp_p
     assert summary["candidate_filtering"]["candidates"] == 3
 
 
-def test_candidate_records_are_plain_json_with_expected_fields(raw_csv, tmp_path):
+def test_candidate_jsonl_records_have_expected_fields(raw_csv, tmp_path):
     out = tmp_path / "processed"
     run(raw_csv, out)
     candidates = list(read_jsonl(out / CANDIDATES_DIR / "candidate_tickets.jsonl"))
 
     assert set(candidates[0]) == {
         "ticket_id", "source_row", "subject", "body", "answer", "ticket_type",
-        "queue", "priority", "language", "tags", "source_version",
+        "queue", "priority", "language", "all_tags", "source_version",
     }
-    assert candidates[0]["tags"] == ["Hardware"]
+    assert candidates[0]["all_tags"] == ["Hardware"]
     assert candidates[1]["subject"] is None  # missing stays missing
     assert len({c["ticket_id"] for c in candidates}) == len(candidates)
 
@@ -61,4 +61,39 @@ def test_pipeline_is_deterministic_apart_from_the_manifest_timestamp(raw_csv, tm
     run(raw_csv, tmp_path / "a")
     run(raw_csv, tmp_path / "b")
     name = "candidate_tickets.jsonl"
-    assert (tmp_path / "a" / CANDIDATES_DIR / name).read_text() == (tmp_path / "b" / CANDIDATES_DIR / name).read_text()
+    assert (tmp_path / "a" / CANDIDATES_DIR / name).read_bytes() == (
+        tmp_path / "b" / CANDIDATES_DIR / name
+    ).read_bytes()
+
+
+def test_empty_input_writes_empty_jsonl_outputs(raw_csv, tmp_path):
+    # Keep the CSV headers but provide no data records.
+    raw_csv.write_text(raw_csv.read_text().splitlines()[0] + "\n")
+    summary = run(raw_csv, tmp_path / "processed")
+    for folder, filename in [
+        (CLEANED_DIR, "cleaned_tickets.jsonl"),
+        (CLEANED_DIR, "rejected_cleaning.jsonl"),
+        (CANDIDATES_DIR, "candidate_tickets.jsonl"),
+        (CANDIDATES_DIR, "rejected_filtering.jsonl"),
+    ]:
+        path = tmp_path / "processed" / folder / filename
+        assert path.read_bytes() == b""
+        assert list(read_jsonl(path)) == []
+    assert summary["candidate_filtering"]["candidates"] == 0
+
+
+def test_priority_distribution_preserves_missing_values(raw_rows, tmp_path):
+    import csv
+    from tests.conftest import COLUMNS
+
+    raw_rows[0]["priority"] = ""
+    path = tmp_path / "tickets.csv"
+    with path.open("w", newline="", encoding="utf-8-sig") as handle:
+        writer = csv.DictWriter(handle, fieldnames=COLUMNS)
+        writer.writeheader()
+        writer.writerows(raw_rows)
+    summary = run(path, tmp_path / "processed")["candidate_filtering"]
+    assert summary["candidates_by_priority"] == {"high": 1, "low": 1}
+    assert summary["candidates_missing_priority"] == 1
+    candidates = list(read_jsonl(tmp_path / "processed" / CANDIDATES_DIR / "candidate_tickets.jsonl"))
+    assert candidates[0]["priority"] is None
